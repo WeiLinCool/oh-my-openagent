@@ -158,7 +158,21 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
 
       const parentContext = await resolveParentContext(ctx, options.client)
 
+      // 自动从父 session 提取 file parts 并合并到 args.parts
+      if (parentContext.fileParts && parentContext.fileParts.length > 0) {
+        args = {
+          ...args,
+          parts: [...(args.parts ?? []), ...parentContext.fileParts],
+        }
+        log("[task] 合并父 session file parts 到 args", {
+          sessionID: ctx.sessionID,
+          filePartsCount: parentContext.fileParts.length,
+          argsPartsCount: args.parts?.length,
+        })
+      }
+
       if (args.task_id) {
+
         if (runInBackground) {
           return executeBackgroundContinuation(args, ctx, options, parentContext)
         }

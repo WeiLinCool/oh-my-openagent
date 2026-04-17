@@ -1,6 +1,7 @@
 import type { CallOmoAgentArgs } from "./types"
 import type { BackgroundManager } from "../../features/background-agent"
 import type { PluginInput } from "@opencode-ai/plugin"
+import type { FilePart } from "@opencode-ai/sdk"
 import { log } from "../../shared"
 import type { DelegatedModelConfig } from "../../shared/model-resolution-types"
 import type { FallbackEntry } from "../../shared/model-requirements"
@@ -44,7 +45,45 @@ export async function executeBackground(
       resolvedParentAgent: parentAgent,
     })
 
+    // 从父 session 最新用户消息提取 file parts
+    let extractedFileParts: Array<{ type: "file"; mime: string; url: string; filename?: string }> | undefined
+    try {
+      const messagesResponse = await client.session.messages({ path: { id: toolContext.sessionID } })
+      if (messagesResponse.data && messagesResponse.data.length > 0) {
+        const userMessages = messagesResponse.data
+          .filter(msg => msg.info?.role === "user")
+          .sort((a, b) => {
+            const aTime = a.info?.time?.created ?? 0
+            const bTime = b.info?.time?.created ?? 0
+            return bTime - aTime
+          })
+
+        if (userMessages.length > 0) {
+          const latestUserMessage = userMessages[0]
+          const parts = latestUserMessage.parts ?? []
+          extractedFileParts = parts
+            .filter((part): part is FilePart => part.type === "file" && "mime" in part && typeof part.mime === "string" && part.mime.startsWith("image/"))
+            .map(part => ({
+              type: "file" as const,
+              mime: part.mime,
+              url: part.url,
+              filename: part.filename,
+            }))
+
+          if (extractedFileParts.length > 0) {
+            log("[call_omo_agent] 提取到 file parts", {
+              sessionID: toolContext.sessionID,
+              filePartsCount: extractedFileParts.length,
+            })
+          }
+        }
+      }
+    } catch (error) {
+      log("[call_omo_agent] 提取 file parts 失败", { sessionID: toolContext.sessionID, error: String(error) })
+    }
+
     const task = await manager.launch({
+
       description: args.description,
       prompt: args.prompt,
       agent: args.subagent_type,
@@ -54,7 +93,7 @@ export async function executeBackground(
       parentTools: getSessionTools(toolContext.sessionID),
       model,
       fallbackChain,
-      parts: args.parts,
+      parts: [...(args.parts ?? []), ...(extractedFileParts ?? [])],
     })
 
     const WAIT_FOR_SESSION_INTERVAL_MS = 50

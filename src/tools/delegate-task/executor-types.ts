@@ -21,6 +21,8 @@ export interface ParentContext {
   messageID: string
   agent?: string
   model?: { providerID: string; modelID: string; variant?: string }
+  /** 从父 session 最新用户消息提取的 file parts（图片/文件附件） */
+  fileParts?: Array<{ type: "file"; mime: string; url: string; filename?: string }>
 }
 
 export interface SessionMessage {
@@ -35,5 +37,5 @@ export interface SessionMessage {
     providerID?: string
     variant?: string
   }
-  parts?: Array<{ type?: string; text?: string }>
+  parts?: Array<{ type?: string; text?: string; mime?: string; url?: string; filename?: string }>
 }
