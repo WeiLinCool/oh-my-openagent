@@ -1,6 +1,5 @@
 import type { CallOmoAgentArgs } from "./types"
 import type { PluginInput } from "@opencode-ai/plugin"
-import type { FilePart } from "@opencode-ai/sdk"
 import { subagentSessions, syncSubagentSessions } from "../../features/claude-code-session-state"
 import { clearSessionFallbackChain, setSessionFallbackChain } from "../../hooks/model-fallback/hook"
 import { getAgentToolRestrictions, log } from "../../shared"
@@ -92,45 +91,7 @@ export async function executeSync(
 
     applySessionPromptParams(sessionID, model)
 
-    // 从父 session 最新用户消息提取 file parts
-    let extractedFileParts: Array<{ type: "file"; mime: string; url: string; filename?: string }> | undefined
-    try {
-      const messagesResponse = await ctx.client.session.messages({ path: { id: toolContext.sessionID } })
-      if (messagesResponse.data && messagesResponse.data.length > 0) {
-        const userMessages = messagesResponse.data
-          .filter(msg => msg.info?.role === "user")
-          .sort((a, b) => {
-            const aTime = a.info?.time?.created ?? 0
-            const bTime = b.info?.time?.created ?? 0
-            return bTime - aTime
-          })
-
-        if (userMessages.length > 0) {
-          const latestUserMessage = userMessages[0]
-          const parts = latestUserMessage.parts ?? []
-          extractedFileParts = parts
-            .filter((part): part is FilePart => part.type === "file" && "mime" in part && typeof part.mime === "string" && part.mime.startsWith("image/"))
-            .map(part => ({
-              type: "file" as const,
-              mime: part.mime,
-              url: part.url,
-              filename: part.filename,
-            }))
-
-          if (extractedFileParts.length > 0) {
-            log("[call_omo_agent] 提取到 file parts", {
-              sessionID: toolContext.sessionID,
-              filePartsCount: extractedFileParts.length,
-            })
-          }
-        }
-      }
-    } catch (error) {
-      log("[call_omo_agent] 提取 file parts 失败", { sessionID: toolContext.sessionID, error: String(error) })
-    }
-
     await Promise.resolve(
-
       toolContext.metadata?.({
         title: args.description,
         metadata: { sessionId: sessionID },
@@ -151,7 +112,7 @@ export async function executeSync(
             task: false,
             question: false,
           },
-          parts: [{ type: "text", text: args.prompt }, ...(args.parts ?? []), ...(extractedFileParts ?? [])],
+          parts: [{ type: "text", text: args.prompt }, ...(args.parts ?? [])],
           ...(model ? { model: { providerID: model.providerID, modelID: model.modelID } } : {}),
           ...(model?.variant ? { variant: model.variant } : {}),
           ...buildPromptGenerationParams(model),
