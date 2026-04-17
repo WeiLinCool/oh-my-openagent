@@ -185,7 +185,7 @@ export async function startTask(
       question: false,
       ...getAgentToolRestrictions(normalizedAgent),
     },
-    parts: [createInternalAgentTextPart(input.prompt)],
+    parts: [createInternalAgentTextPart(input.prompt), ...(input.parts ?? [])],
   }
 
   promptWithModelSuggestionRetry(client, {
@@ -295,7 +295,7 @@ export async function resumeTask(
       question: false,
       ...getAgentToolRestrictions(task.agent),
     },
-    parts: [createInternalAgentTextPart(input.prompt)],
+    parts: [createInternalAgentTextPart(input.prompt), ...(input.parts ?? [])],
   }
 
   client.session.promptAsync({

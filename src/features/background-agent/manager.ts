@@ -570,7 +570,7 @@ export class BackgroundManager {
         setSessionTools(sessionID, tools)
         return tools
       })(),
-      parts: [createInternalAgentTextPart(input.prompt)],
+      parts: [createInternalAgentTextPart(input.prompt), ...(input.parts ?? [])],
     }
 
     promptWithModelSuggestionRetry(this.client, {

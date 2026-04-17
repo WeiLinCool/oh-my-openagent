@@ -112,7 +112,7 @@ export async function executeSync(
             task: false,
             question: false,
           },
-          parts: [{ type: "text", text: args.prompt }],
+          parts: [{ type: "text", text: args.prompt }, ...(args.parts ?? [])],
           ...(model ? { model: { providerID: model.providerID, modelID: model.modelID } } : {}),
           ...(model?.variant ? { variant: model.variant } : {}),
           ...buildPromptGenerationParams(model),

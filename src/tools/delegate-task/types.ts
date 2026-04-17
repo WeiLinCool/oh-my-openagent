@@ -6,6 +6,13 @@ import type {
   AvailableSkill,
 } from "../../agents/dynamic-agent-prompt-builder"
 
+
+// 消息 part 类型定义，支持传递图片/文件附件给子 agent
+// 使用联合类型以符合 OpenCode SDK 的 FilePartInput 要求
+export type MessagePart =
+  | { type: "text"; text: string }
+  | { type: "file"; mime: string; url: string; filename?: string }
+
 export type OpencodeClient = PluginInput["client"]
 
 export interface DelegateTaskArgs {
@@ -17,6 +24,8 @@ export interface DelegateTaskArgs {
   task_id?: string
   command?: string
   load_skills: string[]
+  /** 附加的消息 parts（图片/文件附件），将传递给子 agent */
+  parts?: MessagePart[]
   execute?: {
     task_id: string
     task_dir?: string

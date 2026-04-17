@@ -8,6 +8,8 @@ export interface CallOmoAgentArgs {
   subagent_type: string
   run_in_background: boolean
   session_id?: string
+  /** 附加的消息 parts（图片/文件附件），将传递给子 agent */
+  parts?: Array<{ type: "file"; mime: string; url: string; filename?: string } | { type: "text"; text: string }>
 }
 
 export interface CallOmoAgentSyncResult {

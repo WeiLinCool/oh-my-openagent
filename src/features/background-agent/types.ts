@@ -87,6 +87,8 @@ export interface LaunchInput {
   skillContent?: string
   category?: string
   sessionPermission?: SessionPermissionRule[]
+  /** 附加的消息 parts（图片/文件附件），将传递给子 agent session */
+  parts?: Array<{ type: "file"; mime: string; url: string; filename?: string } | { type: "text"; text: string }>
 }
 
 export interface ResumeInput {
@@ -97,4 +99,6 @@ export interface ResumeInput {
   parentModel?: { providerID: string; modelID: string }
   parentAgent?: string
   parentTools?: Record<string, boolean>
+  /** 附加的消息 parts（图片/文件附件），将传递给子 agent session */
+  parts?: Array<{ type: "file"; mime: string; url: string; filename?: string } | { type: "text"; text: string }>
 }

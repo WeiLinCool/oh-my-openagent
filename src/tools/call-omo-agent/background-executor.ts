@@ -54,6 +54,7 @@ export async function executeBackground(
       parentTools: getSessionTools(toolContext.sessionID),
       model,
       fallbackChain,
+      parts: args.parts,
     })
 
     const WAIT_FOR_SESSION_INTERVAL_MS = 50

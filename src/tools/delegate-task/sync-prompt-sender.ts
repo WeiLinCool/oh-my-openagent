@@ -84,7 +84,7 @@ export async function sendSyncPrompt(
       agent: stripInvisibleAgentCharacters(input.agentToUse),
       system: input.systemContent,
       tools,
-      parts: [createInternalAgentTextPart(effectivePrompt)],
+      parts: [createInternalAgentTextPart(effectivePrompt), ...(input.args.parts ?? [])],
       ...(input.categoryModel
         ? {
             model: {
